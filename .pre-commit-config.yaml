@@ -14,8 +14,15 @@ repos:
 
   - repo: local
     hooks:
+      - id: check-gpl-licenses
+        name: check-gpl-licenses
+        entry: python scripts/check_gpl_licenses.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: pytest
         name: pytest
         entry: pytest --maxfail=1 --cov=ops_summary --cov-report=term-missing
         language: system
-        types: [python]
+        pass_filenames: false
+        files: ^(ops_summary/|tests/)

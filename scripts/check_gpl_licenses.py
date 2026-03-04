@@ -81,10 +81,14 @@ def get_dependency_names() -> set[str]:
     return deps
 
 
+def metadata_field(meta: metadata.PackageMetadata, key: str) -> str:
+    return meta[key].strip() if key in meta else ""
+
+
 def build_installed_index() -> dict[str, metadata.Distribution]:
     idx: dict[str, metadata.Distribution] = {}
     for dist in metadata.distributions():
-        name = dist.metadata.get("Name")
+        name = metadata_field(dist.metadata, "Name")
         if not name:
             continue
         idx[normalize_name(name)] = dist
@@ -93,7 +97,7 @@ def build_installed_index() -> dict[str, metadata.Distribution]:
 
 def license_text_for_dist(dist: metadata.Distribution) -> str:
     parts = []
-    license_field = (dist.metadata.get("License") or "").strip()
+    license_field = metadata_field(dist.metadata, "License")
     if license_field:
         parts.append(license_field)
     for classifier in dist.metadata.get_all("Classifier") or []:

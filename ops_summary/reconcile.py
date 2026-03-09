@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import logging
 from typing import Any
 
 import pandas as pd
@@ -28,6 +29,8 @@ STATUS_PRIORITY = {
     "not_shipped": 1,
     "unknown": 0,
 }
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -318,9 +321,23 @@ def reconcile(
     inspection_df: pd.DataFrame | None = None,
 ) -> ReconcileResult:
     """Reconcile source data on canonical lot + record_date."""
+    logger.info(
+        "Starting reconciliation with raw rows: production=%s shipping=%s inspection=%s",
+        0 if production_df is None else len(production_df),
+        0 if shipping_df is None else len(shipping_df),
+        0 if inspection_df is None else len(inspection_df),
+    )
+
     production = _clean_production(production_df)
     shipping = _clean_shipping(shipping_df)
     inspection = _clean_inspection(inspection_df)
+
+    logger.debug(
+        "Prepared reconciliation rows: production=%s shipping=%s inspection=%s",
+        len(production),
+        len(shipping),
+        len(inspection),
+    )
 
     production_rollup = _aggregate_production(production)
     shipping_rollup = _aggregate_shipping(shipping)
@@ -333,6 +350,9 @@ def reconcile(
     ]
 
     if not key_frames:
+        logger.info(
+            "No valid lot/date keys found; returning empty reconciliation result"
+        )
         return ReconcileResult(summary=pd.DataFrame(), details={})
 
     keys = (
@@ -419,5 +439,12 @@ def reconcile(
     ).reset_index(drop=True)
 
     details = _build_details(summary, production, shipping, inspection)
+
+    logger.info(
+        "Reconciliation complete: summary_rows=%s priority_rows=%s missing_sources_rows=%s",
+        len(summary),
+        int(summary["priority_lot"].sum()),
+        int((summary["reconciliation_status"] == "missing_sources").sum()),
+    )
 
     return ReconcileResult(summary=summary, details=details)

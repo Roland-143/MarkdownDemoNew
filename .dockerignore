@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.tmp
+playwright-report
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.coverage
+.env
+.env.*
+!.env.test
+Roland-143_MarkdownDemoNew_d97414.json

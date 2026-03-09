@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import logging
 
 import pandas as pd
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
+logger = logging.getLogger(__name__)
+
 
 def make_engine(database_url: str) -> Engine:
     """Create an SQLAlchemy engine for the configured database URL."""
+    scheme = database_url.partition(":")[0] or "unknown"
+    logger.debug("Creating SQLAlchemy engine (scheme=%s)", scheme)
     return create_engine(database_url, pool_pre_ping=True)
 
 
@@ -26,11 +31,23 @@ def _read_sql(engine: Engine, sql_text: str) -> pd.DataFrame:
 
 
 def _safe_read(engine: Engine, sql_candidates: Iterable[str]) -> pd.DataFrame:
-    for query in sql_candidates:
+    for candidate_number, query in enumerate(sql_candidates, start=1):
         try:
-            return _read_sql(engine, query)
-        except SQLAlchemyError:
+            frame = _read_sql(engine, query)
+            logger.debug(
+                "SQL query candidate succeeded (candidate=%s, rows=%s)",
+                candidate_number,
+                len(frame),
+            )
+            return frame
+        except SQLAlchemyError as exc:
+            logger.warning(
+                "SQL query candidate failed (candidate=%s, error=%s)",
+                candidate_number,
+                exc.__class__.__name__,
+            )
             continue
+    logger.warning("All SQL query candidates failed; returning empty DataFrame")
     return pd.DataFrame()
 
 
@@ -38,6 +55,7 @@ def load_sources_from_database(
     database_url: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load production/shipping/inspection records from PostgreSQL or sqlite test DB."""
+    logger.info("Loading reconciliation source data from database")
     engine = make_engine(database_url)
 
     lots = _ops_table(engine, "lots")
@@ -98,5 +116,12 @@ def load_sources_from_database(
     production_df = _safe_read(engine, [production_query])
     shipping_df = _safe_read(engine, [shipping_query])
     inspection_df = _safe_read(engine, [inspection_query])
+
+    logger.info(
+        "Loaded source data rows: production=%s shipping=%s inspection=%s",
+        len(production_df),
+        len(shipping_df),
+        len(inspection_df),
+    )
 
     return production_df, shipping_df, inspection_df

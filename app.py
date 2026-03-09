@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import pandas as pd
 import streamlit as st
 
@@ -11,6 +12,14 @@ from ops_summary.reconcile import ReconcileResult, reconcile
 
 
 st.set_page_config(page_title="Operational Summary Reconciler", layout="wide")
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
 
 
 def _read_csv(uploaded_file: object | None) -> pd.DataFrame:
@@ -174,11 +183,15 @@ def _run_upload_mode() -> None:
         inspection_df = _read_csv(inspection_file)
 
         if production_df.empty and shipping_df.empty and inspection_df.empty:
+            logger.warning("Upload reconcile requested without any CSV input")
             st.warning("Upload at least one CSV before reconciling.")
             return
 
-        st.session_state["result"] = reconcile(
-            production_df, shipping_df, inspection_df
+        result = reconcile(production_df, shipping_df, inspection_df)
+        st.session_state["result"] = result
+        logger.info(
+            "Upload reconcile completed with summary_rows=%s",
+            len(result.summary),
         )
 
 
@@ -212,6 +225,7 @@ def _run_db_mode(auto_load: bool) -> None:
 
     if should_load:
         if not manual_db_url:
+            logger.error("DB load requested without a database URL")
             st.error(
                 "Provide DATABASE_URL or TEST_DATABASE_URL before loading from DB."
             )
@@ -220,12 +234,13 @@ def _run_db_mode(auto_load: bool) -> None:
         production_df, shipping_df, inspection_df = load_sources_from_database(
             manual_db_url
         )
-        st.session_state["result"] = reconcile(
-            production_df, shipping_df, inspection_df
-        )
+        result = reconcile(production_df, shipping_df, inspection_df)
+        st.session_state["result"] = result
+        logger.info("DB reconcile completed with summary_rows=%s", len(result.summary))
 
 
 def main() -> None:
+    _configure_logging()
     settings = get_settings()
 
     if "result" not in st.session_state:

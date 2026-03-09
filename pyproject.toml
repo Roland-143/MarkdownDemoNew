@@ -1,0 +1,33 @@
+[project]
+name = "markdown-demo"
+version = "0.1.0"
+description = "Operational summary reconciler Streamlit app"
+authors = [
+    {name = "Admin",email = "admin@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "streamlit (>=1.55.0,<2.0.0)",
+    "pandas (>=2.2,<3)",
+    "sqlalchemy (>=2.0.48,<3.0.0)",
+    "psycopg[binary] (>=3.3.3,<4.0.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "pytest-playwright (>=0.7.2,<0.8.0)",
+    "playwright (>=1.58.0,<2.0.0)"
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+

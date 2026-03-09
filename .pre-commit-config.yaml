@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.7            # pin to a released tag
+    rev: v0.5.7
     hooks:
       - id: ruff
         args: [--fix]
@@ -10,19 +10,13 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-        additional_dependencies: ["types-requests"]  # drop/replace if unnecessary
+        additional_dependencies: ["types-requests"]
 
-   - repo: local
+  - repo: local
     hooks:
       - id: pytest
         name: pytest
-        entry: python -m pytest --cov
-        language: system
-        pass_filenames: false
-      - id: pytest
-        name: pytest
-        entry: poetry run python -m pytest --maxfail=1 --cov=ops_summary --cov-report=term-missing
+        entry: python -m pytest --maxfail=1 --cov=ops_summary --cov-report=term-missing
         language: system
         pass_filenames: false
         files: ^(ops_summary/|tests/)
-

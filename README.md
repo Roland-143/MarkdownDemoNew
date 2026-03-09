@@ -2,7 +2,36 @@
 
 Streamlit app that reconciles production, inspection, and shipping records by canonical `Lot ID + Date`, then surfaces completeness gaps and shipped-lot defect risk.
 
-## Quick Start
+## Docker Quick Start (Assignment-Friendly)
+
+This repo now includes a full Docker setup:
+
+- `app`: Streamlit service
+- `db`: PostgreSQL service initialized from `db/schema.sql` and `db/docker_seed.sql`
+
+1. Build and start:
+
+```bash
+docker compose up --build -d
+```
+
+2. Open the app:
+
+- http://localhost:8501
+
+3. Stop containers:
+
+```bash
+docker compose down
+```
+
+4. Reset DB state (if you need a clean re-seed):
+
+```bash
+docker compose down -v
+```
+
+## Local Quick Start (Poetry)
 
 1. Install dependencies with Poetry:
 

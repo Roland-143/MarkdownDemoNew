@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+import os
 import pandas as pd
+import sentry_sdk
 import streamlit as st
 
 from ops_summary.config import get_settings
@@ -13,6 +15,17 @@ from ops_summary.reconcile import ReconcileResult, reconcile
 
 st.set_page_config(page_title="Operational Summary Reconciler", layout="wide")
 logger = logging.getLogger(__name__)
+
+
+def _init_sentry() -> None:
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        send_default_pii=False,
+        traces_sample_rate=0.0,
+        enable_logs=False,
+        http_proxy="",
+        https_proxy="",
+    )
 
 
 def _configure_logging() -> None:
@@ -242,6 +255,7 @@ def _run_db_mode(auto_load: bool) -> None:
 def main() -> None:
     _configure_logging()
     settings = get_settings()
+    _init_sentry()
 
     if "result" not in st.session_state:
         st.session_state["result"] = _empty_result()

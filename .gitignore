@@ -16,7 +16,7 @@ venv/
 # Local environment files
 .env
 .env.*
-!.env.test
+.env.test
 
 # Streamlit
 .streamlit/

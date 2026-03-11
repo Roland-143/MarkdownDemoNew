@@ -1,5 +1,6 @@
 .git
 .github
+.vscode
 .venv
 .pytest_cache
 .mypy_cache
@@ -13,5 +14,6 @@ __pycache__
 .coverage
 .env
 .env.*
-!.env.test
+tests
+docs
 Roland-143_MarkdownDemoNew_d97414.json

@@ -12,11 +12,19 @@ from sqlalchemy.exc import SQLAlchemyError
 logger = logging.getLogger(__name__)
 
 
+def _normalize_database_url(database_url: str) -> str:
+    """Normalize DSNs so SQLAlchemy uses installed drivers."""
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return database_url
+
+
 def make_engine(database_url: str) -> Engine:
     """Create an SQLAlchemy engine for the configured database URL."""
-    scheme = database_url.partition(":")[0] or "unknown"
+    normalized_url = _normalize_database_url(database_url)
+    scheme = normalized_url.partition(":")[0] or "unknown"
     logger.debug("Creating SQLAlchemy engine (scheme=%s)", scheme)
-    return create_engine(database_url, pool_pre_ping=True)
+    return create_engine(normalized_url, pool_pre_ping=True)
 
 
 def _ops_table(engine: Engine, table_name: str) -> str:

@@ -69,9 +69,19 @@ def test_streamlit_app_loads_and_displays_reconciled_lot(
 ) -> None:
     page.goto(streamlit_server, wait_until="networkidle")
 
-    expect(page.get_by_text("Operational Summary Reconciler").first).to_be_visible(
+    expect(page.get_by_text("Operational Signal Dashboard").first).to_be_visible(
         timeout=30000
     )
-    expect(page.get_by_text("First visible lot: 20260112001")).to_be_visible(
+    expect(page.get_by_text("Production Line Rankings").first).to_be_visible(
+        timeout=30000
+    )
+    expect(page.get_by_text("Shipping Risk Alerts").first).to_be_visible(
+        timeout=30000
+    )
+    expect(page.get_by_text("Defect Trend Signals").first).to_be_visible(
+        timeout=30000
+    )
+    expect(page.get_by_text("Line 1").first).to_be_visible(timeout=30000)
+    expect(page.get_by_text("20260112001").first).to_be_visible(
         timeout=30000
     )

@@ -8,12 +8,16 @@ import os
 from typing import Literal
 
 import pandas as pd
-import sentry_sdk
 import streamlit as st
 
 from ops_summary.config import get_settings
 from ops_summary.db import load_sources_from_database
 from ops_summary.reconcile import reconcile
+
+try:
+    import sentry_sdk
+except ImportError:  # pragma: no cover - optional runtime dependency
+    sentry_sdk = None
 
 
 TimeGrouping = Literal["Daily", "Weekly", "Monthly"]
@@ -27,8 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 def _init_sentry() -> None:
+    dsn = os.getenv("SENTRY_DSN", "").strip()
+    if not dsn:
+        return
+    if sentry_sdk is None:
+        logger.warning("SENTRY_DSN is set but sentry-sdk is not installed; skipping")
+        return
+
     sentry_sdk.init(
-        dsn=os.getenv("SENTRY_DSN"),
+        dsn=dsn,
         send_default_pii=False,
         traces_sample_rate=0.0,
         enable_logs=False,

@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-RUN pip install poetry==1.8.2
+RUN pip install "poetry>=2.0,<3.0"
 
 WORKDIR /app
 

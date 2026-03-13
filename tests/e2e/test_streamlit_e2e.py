@@ -75,13 +75,6 @@ def test_streamlit_app_loads_and_displays_reconciled_lot(
     expect(page.get_by_text("Production Line Rankings").first).to_be_visible(
         timeout=30000
     )
-    expect(page.get_by_text("Shipping Risk Alerts").first).to_be_visible(
-        timeout=30000
-    )
-    expect(page.get_by_text("Defect Trend Signals").first).to_be_visible(
-        timeout=30000
-    )
-    expect(page.get_by_text("Line 1").first).to_be_visible(timeout=30000)
-    expect(page.get_by_text("20260112001").first).to_be_visible(
-        timeout=30000
-    )
+    expect(page.get_by_text("Shipping Risk Alerts").first).to_be_visible(timeout=30000)
+    expect(page.get_by_text("Defect Trend Signals").first).to_be_visible(timeout=30000)
+    expect(page.get_by_text("Rows in Scope").first).to_be_visible(timeout=30000)

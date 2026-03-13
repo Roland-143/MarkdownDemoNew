@@ -176,7 +176,9 @@ def _inject_theme() -> None:
     )
 
 
-def _db_candidates(database_url: str | None, test_database_url: str | None) -> list[tuple[str, str]]:
+def _db_candidates(
+    database_url: str | None, test_database_url: str | None
+) -> list[tuple[str, str]]:
     candidates: list[tuple[str, str]] = []
     seen: set[str] = set()
 
@@ -221,10 +223,14 @@ def _normalize_summary(summary: pd.DataFrame) -> pd.DataFrame:
         if column_name not in normalized.columns:
             normalized[column_name] = default_value
 
-    normalized["record_date"] = pd.to_datetime(normalized["record_date"], errors="coerce")
+    normalized["record_date"] = pd.to_datetime(
+        normalized["record_date"], errors="coerce"
+    )
     normalized["ship_date"] = pd.to_datetime(normalized["ship_date"], errors="coerce")
     normalized["total_defects"] = (
-        pd.to_numeric(normalized["total_defects"], errors="coerce").fillna(0).astype(int)
+        pd.to_numeric(normalized["total_defects"], errors="coerce")
+        .fillna(0)
+        .astype(int)
     )
     normalized["production_line"] = normalized["production_line"].fillna("Unassigned")
     normalized["top_defect_code"] = normalized["top_defect_code"].fillna("UNSPECIFIED")
@@ -238,7 +244,9 @@ def _normalize_summary(summary: pd.DataFrame) -> pd.DataFrame:
     return normalized.dropna(subset=["record_date"]).reset_index(drop=True)
 
 
-def _load_summary_fallback(candidates: list[tuple[str, str]], refresh_nonce: int) -> tuple[pd.DataFrame, str]:
+def _load_summary_fallback(
+    candidates: list[tuple[str, str]], refresh_nonce: int
+) -> tuple[pd.DataFrame, str]:
     last_error: Exception | None = None
     for label, url in candidates:
         try:
@@ -290,8 +298,8 @@ def _build_line_rankings(period_df: pd.DataFrame) -> pd.DataFrame:
         .sum()
         .sort_values(["total_defects", "production_line"], ascending=[False, True])
     )
-    rankings["Rank"] = rankings["total_defects"].rank(method="dense", ascending=False).astype(
-        int
+    rankings["Rank"] = (
+        rankings["total_defects"].rank(method="dense", ascending=False).astype(int)
     )
     return rankings.rename(
         columns={"production_line": "Line", "total_defects": "Total Defects"}
@@ -300,7 +308,9 @@ def _build_line_rankings(period_df: pd.DataFrame) -> pd.DataFrame:
 
 def _build_alerts(period_df: pd.DataFrame) -> pd.DataFrame:
     if period_df.empty:
-        return pd.DataFrame(columns=["Lot", "Defect", "Severity", "Ship Date", "Customer"])
+        return pd.DataFrame(
+            columns=["Lot", "Defect", "Severity", "Ship Date", "Customer"]
+        )
 
     alerts = period_df[
         period_df["ship_status"].isin(["shipped", "partial", "on_hold", "backordered"])
@@ -310,7 +320,9 @@ def _build_alerts(period_df: pd.DataFrame) -> pd.DataFrame:
         )
     ].copy()
     if alerts.empty:
-        return pd.DataFrame(columns=["Lot", "Defect", "Severity", "Ship Date", "Customer"])
+        return pd.DataFrame(
+            columns=["Lot", "Defect", "Severity", "Ship Date", "Customer"]
+        )
 
     alerts["Severity"] = alerts.apply(
         lambda row: _severity(int(row["total_defects"]), str(row["ship_status"])),
@@ -340,7 +352,9 @@ def _build_trend(grouped_df: pd.DataFrame) -> tuple[pd.DataFrame, str, str]:
         .sort_values("period_start")
     )
     trend["prior_total"] = trend["total_defects"].shift(1)
-    trend["delta"] = trend["total_defects"] - trend["prior_total"].fillna(trend["total_defects"])
+    trend["delta"] = trend["total_defects"] - trend["prior_total"].fillna(
+        trend["total_defects"]
+    )
     trend["Direction"] = trend["delta"].apply(
         lambda delta: "Up" if delta > 0 else "Down" if delta < 0 else "Flat"
     )
@@ -387,7 +401,9 @@ def _render_stat_card(label: str, value: str, note: str, tone: str = "neutral") 
 
 def _render_section_header(title: str, subtitle: str) -> None:
     st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="section-subtitle">{subtitle}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="section-subtitle">{subtitle}</div>', unsafe_allow_html=True
+    )
 
 
 def _render_table_card(
@@ -409,7 +425,10 @@ def _render_table_card(
 def _render_sidebar() -> tuple[str, TimeGrouping, bool]:
     with st.sidebar:
         st.markdown('<p class="shell-title">Ops Signal</p>', unsafe_allow_html=True)
-        st.markdown('<p class="shell-subtitle">Operations + Quality Console</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="shell-subtitle">Operations + Quality Console</p>',
+            unsafe_allow_html=True,
+        )
 
         page = st.radio(
             "View",
@@ -441,15 +460,25 @@ def _render_sidebar() -> tuple[str, TimeGrouping, bool]:
     return page, grouping, refresh
 
 
-def _dashboard_kpis(period_rows: pd.DataFrame, alerts: pd.DataFrame) -> tuple[str, str, str, str]:
+def _dashboard_kpis(
+    period_rows: pd.DataFrame, alerts: pd.DataFrame
+) -> tuple[str, str, str, str]:
     total_rows = len(period_rows)
-    total_defects = int(period_rows["total_defects"].sum()) if not period_rows.empty else 0
-    critical_high = int(alerts["Severity"].isin(["Critical", "High"]).sum()) if not alerts.empty else 0
+    total_defects = (
+        int(period_rows["total_defects"].sum()) if not period_rows.empty else 0
+    )
+    critical_high = (
+        int(alerts["Severity"].isin(["Critical", "High"]).sum())
+        if not alerts.empty
+        else 0
+    )
 
     if period_rows.empty:
         reconciled_rate = 0.0
     else:
-        reconciled_rate = float((period_rows["reconciliation_status"] == "reconciled").mean())
+        reconciled_rate = float(
+            (period_rows["reconciliation_status"] == "reconciled").mean()
+        )
 
     return (
         f"{total_rows}",
@@ -483,7 +512,9 @@ def _render_dashboard_page(
     rankings = _build_line_rankings(period_rows)
     trend, latest_signal, latest_delta = _build_trend(grouped)
 
-    total_rows, total_defects, critical_high, reconciled_rate = _dashboard_kpis(period_rows, alerts)
+    total_rows, total_defects, critical_high, reconciled_rate = _dashboard_kpis(
+        period_rows, alerts
+    )
 
     st.caption(f"Current grouped period start: {latest_period} ({grouping})")
 
@@ -491,11 +522,20 @@ def _render_dashboard_page(
     with k1:
         _render_stat_card("Rows in Scope", total_rows, "Rows in latest grouped period")
     with k2:
-        _render_stat_card("Total Defects", total_defects, "Summed from grouped rows", tone="warn")
+        _render_stat_card(
+            "Total Defects", total_defects, "Summed from grouped rows", tone="warn"
+        )
     with k3:
-        _render_stat_card("Critical/High Alerts", critical_high, "Shipping-exposed risk lots", tone="risk")
+        _render_stat_card(
+            "Critical/High Alerts",
+            critical_high,
+            "Shipping-exposed risk lots",
+            tone="risk",
+        )
     with k4:
-        _render_stat_card("Reconciled Rate", reconciled_rate, "Rows fully reconciled", tone="good")
+        _render_stat_card(
+            "Reconciled Rate", reconciled_rate, "Rows fully reconciled", tone="good"
+        )
 
     st.markdown("")
     left, right = st.columns([1.05, 1.35], gap="large")
@@ -534,7 +574,9 @@ def _render_dashboard_page(
             st.metric("Latest Direction", latest_signal, latest_delta)
             trend_table = trend.copy()
             trend_table["Period"] = trend_table["Period"].dt.date
-            st.dataframe(trend_table, hide_index=True, use_container_width=True, height=260)
+            st.dataframe(
+                trend_table, hide_index=True, use_container_width=True, height=260
+            )
 
 
 def _clamp_date(value: date, minimum: date, maximum: date) -> date:
@@ -545,7 +587,9 @@ def _clamp_date(value: date, minimum: date, maximum: date) -> date:
     return value
 
 
-def _render_lot_lookup_page(summary: pd.DataFrame, loaded_source: str, loaded_at: str) -> None:
+def _render_lot_lookup_page(
+    summary: pd.DataFrame, loaded_source: str, loaded_at: str
+) -> None:
     _render_page_header(
         "Lot Lookup",
         "Query lots quickly by id and date range, then inspect severity and reconciliation state.",
@@ -577,7 +621,9 @@ def _render_lot_lookup_page(summary: pd.DataFrame, loaded_source: str, loaded_at
         )
         with st.form("lot_lookup_form"):
             f1, f2, f3 = st.columns([2.2, 1, 1], gap="large")
-            lot_query = f1.text_input("Lot ID", value=filters["lot_query"], placeholder="e.g. 20260112001")
+            lot_query = f1.text_input(
+                "Lot ID", value=filters["lot_query"], placeholder="e.g. 20260112001"
+            )
             start_date = f2.date_input(
                 "Start Date",
                 value=filters["start_date"],
@@ -592,7 +638,9 @@ def _render_lot_lookup_page(summary: pd.DataFrame, loaded_source: str, loaded_at
             )
 
             a1, a2, _ = st.columns([1, 1, 3])
-            search_clicked = a1.form_submit_button("Search", type="primary", use_container_width=True)
+            search_clicked = a1.form_submit_button(
+                "Search", type="primary", use_container_width=True
+            )
             clear_clicked = a2.form_submit_button("Clear", use_container_width=True)
 
     if clear_clicked:
@@ -629,7 +677,9 @@ def _render_lot_lookup_page(summary: pd.DataFrame, loaded_source: str, loaded_at
         lambda row: _severity(int(row["total_defects"]), str(row["ship_status"])),
         axis=1,
     )
-    filtered["Reconciliation"] = filtered["reconciliation_status"].map(_reconciliation_label)
+    filtered["Reconciliation"] = filtered["reconciliation_status"].map(
+        _reconciliation_label
+    )
 
     severity_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
     filtered["severity_order"] = filtered["Severity"].map(severity_order).fillna(4)
@@ -640,18 +690,32 @@ def _render_lot_lookup_page(summary: pd.DataFrame, loaded_source: str, loaded_at
     )
 
     lookup_rows = len(filtered)
-    lookup_critical = int(filtered["Severity"].isin(["Critical", "High"]).sum()) if lookup_rows else 0
+    lookup_critical = (
+        int(filtered["Severity"].isin(["Critical", "High"]).sum()) if lookup_rows else 0
+    )
     lookup_reconciled = (
-        float((filtered["reconciliation_status"] == "reconciled").mean()) if lookup_rows else 0.0
+        float((filtered["reconciliation_status"] == "reconciled").mean())
+        if lookup_rows
+        else 0.0
     )
 
     s1, s2, s3 = st.columns(3, gap="large")
     with s1:
         _render_stat_card("Matches", f"{lookup_rows}", "Rows matching active filters")
     with s2:
-        _render_stat_card("Critical/High", f"{lookup_critical}", "High-priority matched rows", tone="risk")
+        _render_stat_card(
+            "Critical/High",
+            f"{lookup_critical}",
+            "High-priority matched rows",
+            tone="risk",
+        )
     with s3:
-        _render_stat_card("Reconciled Rate", f"{lookup_reconciled * 100:.0f}%", "Within matched rows", tone="good")
+        _render_stat_card(
+            "Reconciled Rate",
+            f"{lookup_reconciled * 100:.0f}%",
+            "Within matched rows",
+            tone="good",
+        )
 
     display = filtered.rename(
         columns={

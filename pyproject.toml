@@ -12,7 +12,8 @@ dependencies = [
     "pandas (>=2.2,<3)",
     "sqlalchemy (>=2.0.48,<3.0.0)",
     "psycopg[binary] (>=3.3.3,<4.0.0)",
-    "python-dotenv (>=1.2.2,<2.0.0)"
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "sentry-sdk (>=2,<3)"
 ]
 
 

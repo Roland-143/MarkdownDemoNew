@@ -1,0 +1,35 @@
+name: deploy-render
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: render-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trigger-render-hook:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK secret is not set"
+            exit 1
+          fi
+          echo "Calling Render Deploy Hook..."
+          status=$(curl --write-out "%{http_code}" --silent --show-error --output /dev/null -X POST "$RENDER_DEPLOY_HOOK")
+          echo "Render hook returned HTTP status $status"
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "Render deploy hook failed"
+            exit 1
+          fi
